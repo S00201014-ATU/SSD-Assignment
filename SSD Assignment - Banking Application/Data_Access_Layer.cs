@@ -133,28 +133,33 @@ namespace Banking_Application
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText =
-                @"
-                    INSERT INTO Bank_Accounts VALUES(" +
-                    "'" + ba.accountNo + "', " +
-                    "'" + ba.name + "', " +
-                    "'" + ba.address_line_1 + "', " +
-                    "'" + ba.address_line_2 + "', " +
-                    "'" + ba.address_line_3 + "', " +
-                    "'" + ba.town + "', " +
-                    ba.balance + ", " +
-                    (ba.GetType() == typeof(Current_Account) ? 1 : 2) + ", ";
+                
+                // FIXED: Using parameterized query instead of string concatenation
+                command.CommandText = @"
+                    INSERT INTO Bank_Accounts 
+                    (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
+                    VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
+
+                command.Parameters.AddWithValue("@accountNo", ba.accountNo);
+                command.Parameters.AddWithValue("@name", ba.name);
+                command.Parameters.AddWithValue("@address1", ba.address_line_1);
+                command.Parameters.AddWithValue("@address2", ba.address_line_2);
+                command.Parameters.AddWithValue("@address3", ba.address_line_3);
+                command.Parameters.AddWithValue("@town", ba.town);
+                command.Parameters.AddWithValue("@balance", ba.balance);
+                command.Parameters.AddWithValue("@accountType", ba.GetType() == typeof(Current_Account) ? 1 : 2);
 
                 if (ba.GetType() == typeof(Current_Account))
                 {
                     Current_Account ca = (Current_Account)ba;
-                    command.CommandText += ca.overdraftAmount + ", NULL)";
+                    command.Parameters.AddWithValue("@overdraft", ca.overdraftAmount);
+                    command.Parameters.AddWithValue("@interest", DBNull.Value);
                 }
-
                 else
                 {
                     Savings_Account sa = (Savings_Account)ba;
-                    command.CommandText += "NULL," + sa.interestRate + ")";
+                    command.Parameters.AddWithValue("@overdraft", DBNull.Value);
+                    command.Parameters.AddWithValue("@interest", sa.interestRate);
                 }
 
                 command.ExecuteNonQuery();
@@ -207,7 +212,10 @@ namespace Banking_Application
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
-                    command.CommandText = "DELETE FROM Bank_Accounts WHERE accountNo = '" + toRemove.accountNo + "'";
+                    
+                    // FIXED: Using parameterized query
+                    command.CommandText = "DELETE FROM Bank_Accounts WHERE accountNo = @accountNo";
+                    command.Parameters.AddWithValue("@accountNo", toRemove.accountNo);
                     command.ExecuteNonQuery();
 
                 }
@@ -243,7 +251,11 @@ namespace Banking_Application
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
-                    command.CommandText = "UPDATE Bank_Accounts SET balance = " + toLodgeTo.balance + " WHERE accountNo = '" + toLodgeTo.accountNo + "'";
+                    
+                    // FIXED: Using parameterized query
+                    command.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
+                    command.Parameters.AddWithValue("@balance", toLodgeTo.balance);
+                    command.Parameters.AddWithValue("@accountNo", toLodgeTo.accountNo);
                     command.ExecuteNonQuery();
 
                 }
@@ -280,7 +292,11 @@ namespace Banking_Application
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
-                    command.CommandText = "UPDATE Bank_Accounts SET balance = " + toWithdrawFrom.balance + " WHERE accountNo = '" + toWithdrawFrom.accountNo + "'";
+                    
+                    // FIXED: Using parameterized query
+                    command.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
+                    command.Parameters.AddWithValue("@balance", toWithdrawFrom.balance);
+                    command.Parameters.AddWithValue("@accountNo", toWithdrawFrom.accountNo);
                     command.ExecuteNonQuery();
 
                 }
