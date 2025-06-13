@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace Banking_Application
 {
+    [SupportedOSPlatform("windows")]
     public class Program
     {
         public static void Main(string[] args)
@@ -12,6 +14,7 @@ namespace Banking_Application
             Data_Access_Layer dal = Data_Access_Layer.getInstance();
             dal.loadBankAccounts();
             bool running = true;
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             do
             {
@@ -227,6 +230,16 @@ namespace Banking_Application
 
                         Console.WriteLine("New Account Number Is: " + accNo);
 
+                        string tellerName = Environment.UserName; // Placeholder for now
+
+                        EventLogger.LogTransaction(
+                            TransactionType.AccountCreation,
+                            tellerName,
+                            accNo,
+                            ba.name
+                        );
+
+
                         break;
                     case "2":
                         Console.WriteLine("Enter Account Number: ");
@@ -262,6 +275,15 @@ namespace Banking_Application
                                     case "y":
                                         dal.closeBankAccount(closeAccNo);
                                         Console.WriteLine("Account Closed Successfully");
+                                        tellerName = Environment.UserName; // Placeholder
+
+                                        EventLogger.LogTransaction(
+                                            TransactionType.AccountClosure,
+                                            tellerName,
+                                            closeAccNo,
+                                            ba.name
+                                        );
+
                                         break;
                                     case "N":
                                     case "n":
@@ -294,9 +316,18 @@ namespace Banking_Application
                         else
                         {
                             Console.WriteLine(ba.ToString());
-                        }
 
+                            tellerName = Environment.UserName; // Placeholder
+
+                            EventLogger.LogTransaction(
+                                TransactionType.BalanceQuery,
+                                tellerName,
+                                viewAccNo,
+                                ba.name
+                            );
+                        }
                         break;
+
                     case "4": //Lodge
                         Console.WriteLine("Enter Account Number: ");
                         String lodgeAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -346,6 +377,17 @@ namespace Banking_Application
                             } while (amountToLodge <= 0);
 
                             dal.lodge(lodgeAccNo, amountToLodge);
+                            tellerName = Environment.UserName;
+                            string reason = amountToLodge > 10000 ? "Large lodgement above €10,000" : null;
+
+                            EventLogger.LogTransaction(
+                                TransactionType.Lodgement,
+                                tellerName,
+                                lodgeAccNo,
+                                ba.name,
+                                amountToLodge,
+                                reason
+                            );
                             Console.WriteLine($"Successfully lodged €{amountToLodge:F2}");
                         }
                         break;
@@ -406,6 +448,18 @@ namespace Banking_Application
                             else
                             {
                                 Console.WriteLine($"Successfully withdrew €{amountToWithdraw:F2}");
+                                tellerName = Environment.UserName; // Placeholder
+                                string reason = amountToWithdraw > 10000 ? "Withdrawal above €10,000" : null;
+
+                                EventLogger.LogTransaction(
+                                    TransactionType.Withdrawal,
+                                    tellerName,
+                                    withdrawAccNo,
+                                    ba.name,
+                                    amountToWithdraw,
+                                    reason
+                                );
+
                             }
                         }
                         break;

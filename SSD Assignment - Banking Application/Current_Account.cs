@@ -1,22 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Banking_Application
 {
-    public class Current_Account: Bank_Account
+    public class Current_Account : Bank_Account
     {
-
         public double overdraftAmount;
 
-        public Current_Account(): base()
+        public Current_Account() : base()
         {
-
         }
-        
-        public Current_Account(String name, String address_line_1, String address_line_2, String address_line_3, String town, double balance, double overdraftAmount) : base(name, address_line_1, address_line_2, address_line_3, town, balance)
+
+        public Current_Account(string name, string address_line_1, string address_line_2, string address_line_3, string town, double balance, double overdraftAmount)
+            : base(name, address_line_1, address_line_2, address_line_3, town, balance)
         {
             this.overdraftAmount = overdraftAmount;
         }
@@ -30,25 +25,22 @@ namespace Banking_Application
                 balance -= amountToWithdraw;
                 return true;
             }
-
             else
+            {
                 return false;
-
+            }
         }
 
         public override double getAvailableFunds()
         {
-            return (base.balance + overdraftAmount);
+            return balance + overdraftAmount;
         }
 
-        public override String ToString()
+        public override string ToString()
         {
-
             return base.ToString() +
-                "Account Type: Current Account\n" +
-                "Overdraft Amount: " + overdraftAmount + "\n";
-
+                   "Account Type: Current Account\n" +
+                   "Overdraft Amount: €" + overdraftAmount.ToString("F2") + "\n";
         }
-
     }
 }

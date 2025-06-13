@@ -23,14 +23,15 @@ namespace Banking_Application
         {
             try
             {
+#if WINDOWS
                 if (!EventLog.SourceExists(EVENT_SOURCE))
                 {
                     EventLog.CreateEventSource(EVENT_SOURCE, EVENT_LOG);
                 }
+#endif
             }
             catch (Exception ex)
             {
-                // If we can't create the event source, we'll still try to log without it
                 Console.WriteLine($"Warning: Could not create event source: {ex.Message}");
             }
         }
@@ -49,15 +50,19 @@ namespace Banking_Application
                 string how = GetApplicationMetadata();
 
                 string logMessage = $"BANKING TRANSACTION LOG\n" +
-                                  $"WHO (Teller): {who1}\n" +
-                                  $"WHO (Account): {who2}\n" +
-                                  $"WHAT: {what}\n" +
-                                  $"WHERE: {where}\n" +
-                                  $"WHEN: {when}\n" +
-                                  $"WHY: {why}\n" +
-                                  $"HOW: {how}";
+                                    $"WHO (Teller): {who1}\n" +
+                                    $"WHO (Account): {who2}\n" +
+                                    $"WHAT: {what}\n" +
+                                    $"WHERE: {where}\n" +
+                                    $"WHEN: {when}\n" +
+                                    $"WHY: {why}\n" +
+                                    $"HOW: {how}";
 
+#if WINDOWS
                 EventLog.WriteEntry(EVENT_SOURCE, logMessage, EventLogEntryType.Information);
+#else
+                Console.WriteLine("EventLog simulation (WINDOWS only):\n" + logMessage);
+#endif
             }
             catch (Exception ex)
             {
@@ -71,15 +76,19 @@ namespace Banking_Application
             {
                 string eventType = successful ? "SUCCESSFUL LOGIN" : "FAILED LOGIN";
                 string logMessage = $"AUTHENTICATION LOG\n" +
-                                  $"WHO: {username ?? "Unknown"}\n" +
-                                  $"WHAT: {eventType}\n" +
-                                  $"WHERE: {GetDeviceIdentifier()}\n" +
-                                  $"WHEN: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
-                                  $"WHY: {reason ?? "N/A"}\n" +
-                                  $"HOW: {GetApplicationMetadata()}";
+                                    $"WHO: {username ?? "Unknown"}\n" +
+                                    $"WHAT: {eventType}\n" +
+                                    $"WHERE: {GetDeviceIdentifier()}\n" +
+                                    $"WHEN: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                                    $"WHY: {reason ?? "N/A"}\n" +
+                                    $"HOW: {GetApplicationMetadata()}";
 
+#if WINDOWS
                 EventLogEntryType entryType = successful ? EventLogEntryType.Information : EventLogEntryType.Warning;
                 EventLog.WriteEntry(EVENT_SOURCE, logMessage, entryType);
+#else
+                Console.WriteLine("Authentication EventLog simulation (WINDOWS only):\n" + logMessage);
+#endif
             }
             catch (Exception ex)
             {
@@ -104,17 +113,14 @@ namespace Banking_Application
         {
             try
             {
-                // Try to get MAC address first
                 string macAddress = GetMacAddress();
                 if (!string.IsNullOrEmpty(macAddress))
                     return $"MAC: {macAddress}";
 
-                // Fallback to IP address
                 string ipAddress = GetLocalIPAddress();
                 if (!string.IsNullOrEmpty(ipAddress))
                     return $"IP: {ipAddress}";
 
-                // Final fallback to Windows SID
                 string sid = GetWindowsSID();
                 return $"SID: {sid}";
             }
