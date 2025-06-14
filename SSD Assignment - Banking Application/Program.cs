@@ -63,65 +63,84 @@ namespace Banking_Application
                                 Console.WriteLine("INVALID NAME ENTERED - PLEASE TRY AGAIN (Letters, spaces, apostrophes and hyphens only)");
 
                             Console.WriteLine("Enter Name: ");
-                            name = InputValidator.SanitizeString(Console.ReadLine());
+                            string rawName = InputValidator.SanitizeString(Console.ReadLine());
+                            name = rawName; // Use plain text name for validation
 
                             loopCount++;
 
                         } while (!InputValidator.IsValidName(name));
-
+                       
+                        name = CryptoHelper.Encrypt(name); // Encrypt only after validation
                         String addressLine1 = "";
                         loopCount = 0;
 
+                        string rawAddress1 = "";
                         do
                         {
-
                             if (loopCount > 0)
                                 Console.WriteLine("INVALID ADDRESS LINE 1 ENTERED - PLEASE TRY AGAIN");
 
                             Console.WriteLine("Enter Address Line 1: ");
-                            addressLine1 = InputValidator.SanitizeString(Console.ReadLine());
+                            rawAddress1 = InputValidator.SanitizeString(Console.ReadLine());
+                            addressLine1 = rawAddress1;
 
                             loopCount++;
 
                         } while (!InputValidator.IsValidAddress(addressLine1, true));
 
-                        String addressLine2 = "";
+                        addressLine1 = CryptoHelper.Encrypt(addressLine1); // Encrypt after validation
+
+
+
+                        string addressLine2 = "";
                         Console.WriteLine("Enter Address Line 2: ");
-                        addressLine2 = InputValidator.SanitizeString(Console.ReadLine());
+                        string rawAddress2 = InputValidator.SanitizeString(Console.ReadLine());
 
                         // Validate optional address line 2
-                        if (!InputValidator.IsValidAddress(addressLine2, false))
+                        if (!InputValidator.IsValidAddress(rawAddress2, false))
                         {
                             Console.WriteLine("Invalid characters in Address Line 2 - clearing field");
                             addressLine2 = "";
                         }
+                        else
+                        {
+                            addressLine2 = CryptoHelper.Encrypt(rawAddress2); // Encrypt only if valid
+                        }
+
 
                         String addressLine3 = "";
                         Console.WriteLine("Enter Address Line 3: ");
-                        addressLine3 = InputValidator.SanitizeString(Console.ReadLine());
+                        string rawAddress3 = InputValidator.SanitizeString(Console.ReadLine());
 
-                        // Validate optional address line 3
-                        if (!InputValidator.IsValidAddress(addressLine3, false))
+                        if (!InputValidator.IsValidAddress(rawAddress3, false))
                         {
                             Console.WriteLine("Invalid characters in Address Line 3 - clearing field");
                             addressLine3 = "";
                         }
+                        else
+                        {
+                            addressLine3 = CryptoHelper.Encrypt(rawAddress3);
+                        }
+
 
                         String town = "";
                         loopCount = 0;
 
+                        string rawTown = "";
                         do
                         {
-
                             if (loopCount > 0)
                                 Console.WriteLine("INVALID TOWN ENTERED - PLEASE TRY AGAIN");
 
                             Console.WriteLine("Enter Town: ");
-                            town = InputValidator.SanitizeString(Console.ReadLine());
+                            rawTown = InputValidator.SanitizeString(Console.ReadLine());
+                            town = rawTown;
 
                             loopCount++;
 
                         } while (!InputValidator.IsValidTown(town));
+
+                        town = CryptoHelper.Encrypt(town); // Encrypt after validation
 
                         double balance = -1;
                         loopCount = 0;
@@ -276,6 +295,7 @@ namespace Banking_Application
                                         dal.closeBankAccount(closeAccNo);
                                         Console.WriteLine("Account Closed Successfully");
                                         tellerName = Environment.UserName; // Placeholder
+                                        ba.name = CryptoHelper.Decrypt(ba.name);
 
                                         EventLogger.LogTransaction(
                                             TransactionType.AccountClosure,
@@ -315,6 +335,13 @@ namespace Banking_Application
                         }
                         else
                         {
+                            // Decrypt all PII fields before display
+                            ba.name = CryptoHelper.Decrypt(ba.name);
+                            ba.address_line_1 = CryptoHelper.Decrypt(ba.address_line_1);
+                            ba.address_line_2 = string.IsNullOrEmpty(ba.address_line_2) ? "" : CryptoHelper.Decrypt(ba.address_line_2);
+                            ba.address_line_3 = string.IsNullOrEmpty(ba.address_line_3) ? "" : CryptoHelper.Decrypt(ba.address_line_3);
+                            ba.town = CryptoHelper.Decrypt(ba.town);
+
                             Console.WriteLine(ba.ToString());
 
                             tellerName = Environment.UserName; // Placeholder
@@ -379,6 +406,7 @@ namespace Banking_Application
                             dal.lodge(lodgeAccNo, amountToLodge);
                             tellerName = Environment.UserName;
                             string reason = amountToLodge > 10000 ? "Large lodgement above €10,000" : null;
+                            ba.name = CryptoHelper.Decrypt(ba.name);
 
                             EventLogger.LogTransaction(
                                 TransactionType.Lodgement,
@@ -450,7 +478,7 @@ namespace Banking_Application
                                 Console.WriteLine($"Successfully withdrew €{amountToWithdraw:F2}");
                                 tellerName = Environment.UserName; // Placeholder
                                 string reason = amountToWithdraw > 10000 ? "Withdrawal above €10,000" : null;
-
+                                ba.name = CryptoHelper.Decrypt(ba.name);
                                 EventLogger.LogTransaction(
                                     TransactionType.Withdrawal,
                                     tellerName,
