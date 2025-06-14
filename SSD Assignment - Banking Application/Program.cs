@@ -378,7 +378,6 @@ namespace Banking_Application
 
                             do
                             {
-
                                 if (loopCount > 0)
                                     Console.WriteLine("INVALID AMOUNT ENTERED - PLEASE TRY AGAIN (Must be greater than 0)");
 
@@ -394,7 +393,6 @@ namespace Banking_Application
                                         loopCount++;
                                     }
                                 }
-
                                 catch
                                 {
                                     amountToLodge = -1;
@@ -403,9 +401,34 @@ namespace Banking_Application
 
                             } while (amountToLodge <= 0);
 
+                            // Prompt for reason if amount is over €10,000
+                            string reason = null;
+                            if (amountToLodge > 10000)
+                            {
+                                do
+                                {
+                                    Console.WriteLine("Amount exceeds €10,000. Please enter a valid reason for this transaction (at least 3 characters, must include letters):");
+                                    string rawInput = Console.ReadLine();
+
+                                    // Validate: not empty, contains letters, at least 3 characters
+                                    if (string.IsNullOrWhiteSpace(rawInput) || rawInput.Length < 3 || !rawInput.Any(char.IsLetter))
+                                    {
+                                        Console.WriteLine("Invalid reason. It must be at least 3 characters long and contain at least one letter.");
+                                        reason = null;
+                                    }
+                                    else
+                                    {
+                                        reason = InputValidator.SanitizeString(rawInput);
+                                    }
+
+                                } while (reason == null);
+                            }
+
+
+
                             dal.lodge(lodgeAccNo, amountToLodge);
+
                             tellerName = Environment.UserName;
-                            string reason = amountToLodge > 10000 ? "Large lodgement above €10,000" : null;
                             ba.name = CryptoHelper.Decrypt(ba.name);
 
                             EventLogger.LogTransaction(
@@ -416,9 +439,11 @@ namespace Banking_Application
                                 amountToLodge,
                                 reason
                             );
+
                             Console.WriteLine($"Successfully lodged €{amountToLodge:F2}");
                         }
                         break;
+
                     case "5": //Withdraw
                         Console.WriteLine("Enter Account Number: ");
                         String withdrawAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -442,7 +467,6 @@ namespace Banking_Application
 
                             do
                             {
-
                                 if (loopCount > 0)
                                     Console.WriteLine("INVALID AMOUNT ENTERED - PLEASE TRY AGAIN (Must be greater than 0)");
 
@@ -458,7 +482,6 @@ namespace Banking_Application
                                         loopCount++;
                                     }
                                 }
-
                                 catch
                                 {
                                     amountToWithdraw = -1;
@@ -466,6 +489,28 @@ namespace Banking_Application
                                 }
 
                             } while (amountToWithdraw <= 0);
+
+                            // Prompt for reason if over €10,000
+                            string reason = null;
+                            if (amountToWithdraw > 10000)
+                            {
+                                do
+                                {
+                                    Console.WriteLine("Amount exceeds €10,000. Please enter a valid reason for this transaction (at least 3 characters, must include letters):");
+                                    string rawInput = Console.ReadLine();
+
+                                    if (string.IsNullOrWhiteSpace(rawInput) || rawInput.Length < 3 || !rawInput.Any(char.IsLetter))
+                                    {
+                                        Console.WriteLine("Invalid reason. It must be at least 3 characters long and contain at least one letter.");
+                                        reason = null;
+                                    }
+                                    else
+                                    {
+                                        reason = InputValidator.SanitizeString(rawInput);
+                                    }
+
+                                } while (reason == null);
+                            }
 
                             bool withdrawalOK = dal.withdraw(withdrawAccNo, amountToWithdraw);
 
@@ -477,7 +522,6 @@ namespace Banking_Application
                             {
                                 Console.WriteLine($"Successfully withdrew €{amountToWithdraw:F2}");
                                 tellerName = Environment.UserName; // Placeholder
-                                string reason = amountToWithdraw > 10000 ? "Withdrawal above €10,000" : null;
                                 ba.name = CryptoHelper.Decrypt(ba.name);
                                 EventLogger.LogTransaction(
                                     TransactionType.Withdrawal,
@@ -487,10 +531,10 @@ namespace Banking_Application
                                     amountToWithdraw,
                                     reason
                                 );
-
                             }
                         }
                         break;
+
                     case "6":
                         running = false;
                         break;
