@@ -8,6 +8,21 @@ namespace Banking_Application
     [SupportedOSPlatform("windows")]
     public class Program
     {
+        public static bool HasSufficientDiskSpace(long requiredBytes = 1024 * 1024) // 1MB by default
+        {
+            try
+            {
+                string rootPath = Path.GetPathRoot(Environment.CurrentDirectory);
+                DriveInfo drive = new DriveInfo(rootPath);
+                return drive.AvailableFreeSpace >= requiredBytes;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Disk space check failed: " + ex.Message);
+                return false;
+            }
+        }
+
         public static void Main(string[] args)
         {
 
@@ -33,12 +48,17 @@ namespace Banking_Application
                 switch (option)
                 {
                     case "1":
+                        if (!HasSufficientDiskSpace())
+                        {
+                            Console.WriteLine("There isn't enough space on the computer to add a new account.");
+                            break;
+                        }
+
                         String accountType = "";
                         int loopCount = 0;
 
                         do
                         {
-
                             if (loopCount > 0)
                                 Console.WriteLine("INVALID OPTION CHOSEN - PLEASE TRY AGAIN");
 
@@ -50,7 +70,6 @@ namespace Banking_Application
                             accountType = Console.ReadLine();
 
                             loopCount++;
-
                         } while (!(accountType.Equals("1") || accountType.Equals("2")));
 
                         String name = "";
@@ -58,23 +77,22 @@ namespace Banking_Application
 
                         do
                         {
-
                             if (loopCount > 0)
                                 Console.WriteLine("INVALID NAME ENTERED - PLEASE TRY AGAIN (Letters, spaces, apostrophes and hyphens only)");
 
                             Console.WriteLine("Enter Name: ");
                             string rawName = InputValidator.SanitizeString(Console.ReadLine());
-                            name = rawName; // Use plain text name for validation
+                            name = rawName;
 
                             loopCount++;
-
                         } while (!InputValidator.IsValidName(name));
-                       
-                        name = CryptoHelper.Encrypt(name); // Encrypt only after validation
+
+                        name = CryptoHelper.Encrypt(name);
+
                         String addressLine1 = "";
                         loopCount = 0;
-
                         string rawAddress1 = "";
+
                         do
                         {
                             if (loopCount > 0)
@@ -85,18 +103,14 @@ namespace Banking_Application
                             addressLine1 = rawAddress1;
 
                             loopCount++;
-
                         } while (!InputValidator.IsValidAddress(addressLine1, true));
 
-                        addressLine1 = CryptoHelper.Encrypt(addressLine1); // Encrypt after validation
-
-
+                        addressLine1 = CryptoHelper.Encrypt(addressLine1);
 
                         string addressLine2 = "";
                         Console.WriteLine("Enter Address Line 2: ");
                         string rawAddress2 = InputValidator.SanitizeString(Console.ReadLine());
 
-                        // Validate optional address line 2
                         if (!InputValidator.IsValidAddress(rawAddress2, false))
                         {
                             Console.WriteLine("Invalid characters in Address Line 2 - clearing field");
@@ -104,9 +118,8 @@ namespace Banking_Application
                         }
                         else
                         {
-                            addressLine2 = CryptoHelper.Encrypt(rawAddress2); // Encrypt only if valid
+                            addressLine2 = CryptoHelper.Encrypt(rawAddress2);
                         }
-
 
                         String addressLine3 = "";
                         Console.WriteLine("Enter Address Line 3: ");
@@ -122,11 +135,10 @@ namespace Banking_Application
                             addressLine3 = CryptoHelper.Encrypt(rawAddress3);
                         }
 
-
                         String town = "";
                         loopCount = 0;
-
                         string rawTown = "";
+
                         do
                         {
                             if (loopCount > 0)
@@ -137,17 +149,15 @@ namespace Banking_Application
                             town = rawTown;
 
                             loopCount++;
-
                         } while (!InputValidator.IsValidTown(town));
 
-                        town = CryptoHelper.Encrypt(town); // Encrypt after validation
+                        town = CryptoHelper.Encrypt(town);
 
                         double balance = -1;
                         loopCount = 0;
 
                         do
                         {
-
                             if (loopCount > 0)
                                 Console.WriteLine("INVALID OPENING BALANCE ENTERED - PLEASE TRY AGAIN (Must be 0 or greater)");
 
@@ -159,11 +169,10 @@ namespace Banking_Application
                                 balance = Convert.ToDouble(balanceString);
                                 if (!InputValidator.IsValidMonetaryAmount(balance, true))
                                 {
-                                    balance = -1; // Force retry
+                                    balance = -1;
                                     loopCount++;
                                 }
                             }
-
                             catch
                             {
                                 balance = -1;
@@ -181,7 +190,6 @@ namespace Banking_Application
 
                             do
                             {
-
                                 if (loopCount > 0)
                                     Console.WriteLine("INVALID OVERDRAFT AMOUNT ENTERED - PLEASE TRY AGAIN (Must be 0 or greater)");
 
@@ -193,31 +201,26 @@ namespace Banking_Application
                                     overdraftAmount = Convert.ToDouble(overdraftAmountString);
                                     if (!InputValidator.IsValidMonetaryAmount(overdraftAmount, true))
                                     {
-                                        overdraftAmount = -1; // Force retry
+                                        overdraftAmount = -1;
                                         loopCount++;
                                     }
                                 }
-
                                 catch
                                 {
                                     overdraftAmount = -1;
                                     loopCount++;
                                 }
-
                             } while (overdraftAmount < 0);
 
                             ba = new Current_Account(name, addressLine1, addressLine2, addressLine3, town, balance, overdraftAmount);
                         }
-
                         else
                         {
-
                             double interestRate = -1;
                             loopCount = 0;
 
                             do
                             {
-
                                 if (loopCount > 0)
                                     Console.WriteLine("INVALID INTEREST RATE ENTERED - PLEASE TRY AGAIN (Must be between 0 and 100)");
 
@@ -229,17 +232,15 @@ namespace Banking_Application
                                     interestRate = Convert.ToDouble(interestRateString);
                                     if (!InputValidator.IsValidPercentage(interestRate))
                                     {
-                                        interestRate = -1; // Force retry
+                                        interestRate = -1;
                                         loopCount++;
                                     }
                                 }
-
                                 catch
                                 {
                                     interestRate = -1;
                                     loopCount++;
                                 }
-
                             } while (interestRate < 0);
 
                             ba = new Savings_Account(name, addressLine1, addressLine2, addressLine3, town, balance, interestRate);
@@ -249,7 +250,7 @@ namespace Banking_Application
 
                         Console.WriteLine("New Account Number Is: " + accNo);
 
-                        string tellerName = Environment.UserName; // Placeholder for now
+                        string tellerName = Environment.UserName;
 
                         EventLogger.LogTransaction(
                             TransactionType.AccountCreation,
@@ -258,8 +259,8 @@ namespace Banking_Application
                             ba.name
                         );
 
-
                         break;
+
                     case "2":
                         Console.WriteLine("Enter Account Number: ");
                         String closeAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -356,6 +357,12 @@ namespace Banking_Application
                         break;
 
                     case "4": //Lodge
+                        if (!HasSufficientDiskSpace())
+                        {
+                            Console.WriteLine("There isn't enough space on the computer to lodge money into an account.");
+                            break;
+                        }
+
                         Console.WriteLine("Enter Account Number: ");
                         String lodgeAccNo = InputValidator.SanitizeString(Console.ReadLine());
 
@@ -445,6 +452,12 @@ namespace Banking_Application
                         break;
 
                     case "5": //Withdraw
+                        if (!HasSufficientDiskSpace())
+                        {
+                            Console.WriteLine("There isn't enough space on the computer to withdraw money from an account.");
+                            break;
+                        }
+
                         Console.WriteLine("Enter Account Number: ");
                         String withdrawAccNo = InputValidator.SanitizeString(Console.ReadLine());
 
