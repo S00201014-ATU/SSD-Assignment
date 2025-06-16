@@ -11,13 +11,12 @@ namespace Banking_Application
     public class Data_Access_Layer
     {
 
-        private List<Bank_Account> accounts;
         public static String databaseName = "Banking Database.db";
         private static Data_Access_Layer instance = new Data_Access_Layer();
 
         private Data_Access_Layer()//Singleton Design Pattern (For Concurrency Control) - Use getInstance() Method Instead.
         {
-            accounts = new List<Bank_Account>();
+            
         }
 
         public static Data_Access_Layer getInstance()
@@ -65,80 +64,17 @@ namespace Banking_Application
             }
         }
 
-        public void loadBankAccounts()
+        public string addBankAccount(Bank_Account ba)
         {
-            if (!File.Exists(Data_Access_Layer.databaseName))
-                initialiseDatabase();
-            else
-            {
-
-                using (var connection = getDatabaseConnection())
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-                    command.CommandText = "SELECT * FROM Bank_Accounts";
-                    SqliteDataReader dr = command.ExecuteReader();
-                    
-                    while(dr.Read())
-                    {
-
-                        int accountType = dr.GetInt16(7);
-
-                        if(accountType == Account_Type.Current_Account)
-                        {
-                            Current_Account ca = new Current_Account();
-                            ca.accountNo = dr.GetString(0);
-                            ca.name = dr.GetString(1);
-                            ca.address_line_1 = dr.GetString(2);
-                            ca.address_line_2 = dr.GetString(3);
-                            ca.address_line_3 = dr.GetString(4);
-                            ca.town = dr.GetString(5);
-                            ca.balance = dr.GetDouble(6);
-                            ca.overdraftAmount = dr.GetDouble(8);
-                            accounts.Add(ca);
-                        }
-                        else
-                        {
-                            Savings_Account sa = new Savings_Account();
-                            sa.accountNo = dr.GetString(0);
-                            sa.name = dr.GetString(1);
-                            sa.address_line_1 = dr.GetString(2);
-                            sa.address_line_2 = dr.GetString(3);
-                            sa.address_line_3 = dr.GetString(4);
-                            sa.town = dr.GetString(5);
-                            sa.balance = dr.GetDouble(6);
-                            sa.interestRate = dr.GetDouble(9);
-                            accounts.Add(sa);
-                        }
-
-
-                    }
-
-                }
-
-            }
-        }
-
-        public String addBankAccount(Bank_Account ba) 
-        {
-
-            if (ba.GetType() == typeof(Current_Account))
-                ba = (Current_Account)ba;
-            else
-                ba = (Savings_Account)ba;
-
-            accounts.Add(ba);
-
             using (var connection = getDatabaseConnection())
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                
-                // FIXED: Using parameterized query instead of string concatenation
+
                 command.CommandText = @"
-                    INSERT INTO Bank_Accounts 
-                    (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
-                    VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
+            INSERT INTO Bank_Accounts 
+            (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
+            VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
 
                 command.Parameters.AddWithValue("@accountNo", ba.accountNo);
                 command.Parameters.AddWithValue("@name", ba.name);
@@ -147,163 +83,161 @@ namespace Banking_Application
                 command.Parameters.AddWithValue("@address3", ba.address_line_3);
                 command.Parameters.AddWithValue("@town", ba.town);
                 command.Parameters.AddWithValue("@balance", ba.balance);
-                command.Parameters.AddWithValue("@accountType", ba.GetType() == typeof(Current_Account) ? 1 : 2);
+                command.Parameters.AddWithValue("@accountType", ba is Current_Account ? 1 : 2);
 
-                if (ba.GetType() == typeof(Current_Account))
+                if (ba is Current_Account ca)
                 {
-                    Current_Account ca = (Current_Account)ba;
                     command.Parameters.AddWithValue("@overdraft", ca.overdraftAmount);
                     command.Parameters.AddWithValue("@interest", DBNull.Value);
                 }
-                else
+                else if (ba is Savings_Account sa)
                 {
-                    Savings_Account sa = (Savings_Account)ba;
                     command.Parameters.AddWithValue("@overdraft", DBNull.Value);
                     command.Parameters.AddWithValue("@interest", sa.interestRate);
                 }
 
                 command.ExecuteNonQuery();
-
             }
 
             return ba.accountNo;
-
         }
 
-        public Bank_Account findBankAccountByAccNo(String accNo) 
-        { 
-        
-            foreach(Bank_Account ba in accounts)
-            {
-
-                if (ba.accountNo.Equals(accNo))
-                {
-                    return ba;
-                }
-
-            }
-
-            return null; 
-        }
-
-        public bool closeBankAccount(String accNo) 
+        public Bank_Account findBankAccountByAccNo(string accNo)
         {
-
-            Bank_Account toRemove = null;
-            
-            foreach (Bank_Account ba in accounts)
+            using (var connection = getDatabaseConnection())
             {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT * FROM Bank_Accounts WHERE accountNo = @accountNo";
+                command.Parameters.AddWithValue("@accountNo", accNo);
 
-                if (ba.accountNo.Equals(accNo))
+                using (var reader = command.ExecuteReader())
                 {
-                    toRemove = ba;
-                    break;
-                }
+                    if (reader.Read())
+                    {
+                        int accountType = reader.GetInt16(7);
 
+                        if (accountType == Account_Type.Current_Account)
+                        {
+                            return new Current_Account
+                            {
+                                accountNo = reader.GetString(0),
+                                name = reader.GetString(1),
+                                address_line_1 = reader.GetString(2),
+                                address_line_2 = reader.GetString(3),
+                                address_line_3 = reader.GetString(4),
+                                town = reader.GetString(5),
+                                balance = reader.GetDouble(6),
+                                overdraftAmount = reader.GetDouble(8)
+                            };
+                        }
+                        else
+                        {
+                            return new Savings_Account
+                            {
+                                accountNo = reader.GetString(0),
+                                name = reader.GetString(1),
+                                address_line_1 = reader.GetString(2),
+                                address_line_2 = reader.GetString(3),
+                                address_line_3 = reader.GetString(4),
+                                town = reader.GetString(5),
+                                balance = reader.GetDouble(6),
+                                interestRate = reader.GetDouble(9)
+                            };
+                        }
+                    }
+                }
             }
 
-            if (toRemove == null)
-                return false;
-            else
+            return null;
+        }
+
+        public bool closeBankAccount(string accNo)
+        {
+            using (var connection = getDatabaseConnection())
             {
-                accounts.Remove(toRemove);
+                connection.Open();
 
-                using (var connection = getDatabaseConnection())
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-                    
-                    // FIXED: Using parameterized query
-                    command.CommandText = "DELETE FROM Bank_Accounts WHERE accountNo = @accountNo";
-                    command.Parameters.AddWithValue("@accountNo", toRemove.accountNo);
-                    command.ExecuteNonQuery();
+                // First check if account exists
+                var checkCommand = connection.CreateCommand();
+                checkCommand.CommandText = "SELECT COUNT(*) FROM Bank_Accounts WHERE accountNo = @accountNo";
+                checkCommand.Parameters.AddWithValue("@accountNo", accNo);
 
-                }
+                long count = (long)checkCommand.ExecuteScalar();
+                if (count == 0)
+                    return false;
+
+                // If exists, delete it
+                var deleteCommand = connection.CreateCommand();
+                deleteCommand.CommandText = "DELETE FROM Bank_Accounts WHERE accountNo = @accountNo";
+                deleteCommand.Parameters.AddWithValue("@accountNo", accNo);
+                deleteCommand.ExecuteNonQuery();
 
                 return true;
             }
-
         }
 
-        public bool lodge(String accNo, double amountToLodge)
+        public bool lodge(string accNo, double amountToLodge)
         {
-
-            Bank_Account toLodgeTo = null;
-
-            foreach (Bank_Account ba in accounts)
+            using (var connection = getDatabaseConnection())
             {
+                connection.Open();
 
-                if (ba.accountNo.Equals(accNo))
-                {
-                    ba.lodge(amountToLodge);
-                    toLodgeTo = ba;
-                    break;
-                }
+                // Retrieve current balance
+                var getCommand = connection.CreateCommand();
+                getCommand.CommandText = "SELECT balance FROM Bank_Accounts WHERE accountNo = @accountNo";
+                getCommand.Parameters.AddWithValue("@accountNo", accNo);
 
-            }
+                object result = getCommand.ExecuteScalar();
 
-            if (toLodgeTo == null)
-                return false;
-            else
-            {
+                if (result == null)
+                    return false;
 
-                using (var connection = getDatabaseConnection())
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-                    
-                    // FIXED: Using parameterized query
-                    command.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
-                    command.Parameters.AddWithValue("@balance", toLodgeTo.balance);
-                    command.Parameters.AddWithValue("@accountNo", toLodgeTo.accountNo);
-                    command.ExecuteNonQuery();
+                double currentBalance = Convert.ToDouble(result);
+                double newBalance = currentBalance + amountToLodge;
 
-                }
+                // Update balance
+                var updateCommand = connection.CreateCommand();
+                updateCommand.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
+                updateCommand.Parameters.AddWithValue("@balance", newBalance);
+                updateCommand.Parameters.AddWithValue("@accountNo", accNo);
+                updateCommand.ExecuteNonQuery();
 
                 return true;
             }
-
         }
 
-        public bool withdraw(String accNo, double amountToWithdraw)
+
+        public bool withdraw(string accNo, double amountToWithdraw)
         {
-
-            Bank_Account toWithdrawFrom = null;
-            bool result = false;
-
-            foreach (Bank_Account ba in accounts)
+            using (var connection = getDatabaseConnection())
             {
+                connection.Open();
 
-                if (ba.accountNo.Equals(accNo))
-                {
-                    result = ba.withdraw(amountToWithdraw);
-                    toWithdrawFrom = ba;
-                    break;
-                }
+                // Get current balance
+                var getCommand = connection.CreateCommand();
+                getCommand.CommandText = "SELECT balance FROM Bank_Accounts WHERE accountNo = @accountNo";
+                getCommand.Parameters.AddWithValue("@accountNo", accNo);
 
-            }
+                object result = getCommand.ExecuteScalar();
+                if (result == null)
+                    return false;
 
-            if (toWithdrawFrom == null || result == false)
-                return false;
-            else
-            {
+                double currentBalance = Convert.ToDouble(result);
+                if (currentBalance < amountToWithdraw)
+                    return false;
 
-                using (var connection = getDatabaseConnection())
-                {
-                    connection.Open();
-                    var command = connection.CreateCommand();
-                    
-                    // FIXED: Using parameterized query
-                    command.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
-                    command.Parameters.AddWithValue("@balance", toWithdrawFrom.balance);
-                    command.Parameters.AddWithValue("@accountNo", toWithdrawFrom.accountNo);
-                    command.ExecuteNonQuery();
+                double newBalance = currentBalance - amountToWithdraw;
 
-                }
+                // Update balance
+                var updateCommand = connection.CreateCommand();
+                updateCommand.CommandText = "UPDATE Bank_Accounts SET balance = @balance WHERE accountNo = @accountNo";
+                updateCommand.Parameters.AddWithValue("@balance", newBalance);
+                updateCommand.Parameters.AddWithValue("@accountNo", accNo);
+                updateCommand.ExecuteNonQuery();
 
                 return true;
             }
-
         }
 
     }
