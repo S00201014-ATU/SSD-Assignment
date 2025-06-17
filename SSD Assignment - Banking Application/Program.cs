@@ -359,6 +359,7 @@ namespace Banking_Application
                             ba.address_line_3 = null;
                             ba.town = null;
                             GC.Collect();
+                            GC.WaitForPendingFinalizers();
                         }
                         break;
 
@@ -560,7 +561,7 @@ namespace Banking_Application
                                 ba.name = null;
                                 reason = null;
                                 GC.Collect();
-
+                                GC.WaitForPendingFinalizers();
                             }
                         }
                         break;
