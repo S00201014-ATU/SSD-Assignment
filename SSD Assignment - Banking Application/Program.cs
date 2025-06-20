@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SSD_Assignment___Banking_Application;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -8,21 +9,6 @@ namespace Banking_Application
     [SupportedOSPlatform("windows")]
     public class Program
     {
-        public static bool HasSufficientDiskSpace(long requiredBytes = 1024 * 1024) // 1MB by default
-        {
-            try
-            {
-                string rootPath = Path.GetPathRoot(Environment.CurrentDirectory);
-                DriveInfo drive = new DriveInfo(rootPath);
-                return drive.AvailableFreeSpace >= requiredBytes;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Disk space check failed: " + ex.Message);
-                return false;
-            }
-        }
-
         public static void Main(string[] args)
         {
 
@@ -47,7 +33,7 @@ namespace Banking_Application
                 switch (option)
                 {
                     case "1":
-                        if (!HasSufficientDiskSpace())
+                        if (!ResourceChecker.HasSufficientDiskSpace())
                         {
                             Console.WriteLine("There isn't enough space on the computer to add a new account.");
                             break;
