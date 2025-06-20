@@ -243,6 +243,10 @@ namespace Banking_Application
                             accNo,
                             ba.name
                         );
+                        ba = null;
+                        tellerName = null;
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
 
                         break;
 
@@ -290,6 +294,11 @@ namespace Banking_Application
                                             ba.name
                                         );
 
+                                        ba = null;
+                                        tellerName = null;
+                                        GC.Collect();
+                                        GC.WaitForPendingFinalizers();
+                                        
                                         break;
                                     case "N":
                                     case "n":
