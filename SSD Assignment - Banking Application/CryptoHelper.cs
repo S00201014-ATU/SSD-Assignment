@@ -7,17 +7,26 @@ namespace Banking_Application
 {
     public static class CryptoHelper
     {
-        private static readonly string encryptionKey = "87vG4iWZp5LR0YnBj2XM0nUuF9qhSe1T";
+        private static readonly string cryptoKeyName = "SSD_Banking_Key";
+        private static readonly CngProvider keyStorageProvider = CngProvider.MicrosoftSoftwareKeyStorageProvider;
 
         public static string Encrypt(string plainText)
         {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(encryptionKey);
             byte[] ivBytes = null;
 
             try
             {
-                using Aes aes = Aes.Create();
-                aes.Key = keyBytes;
+                // Ensure key exists in storage
+                if (!CngKey.Exists(cryptoKeyName, keyStorageProvider))
+                {
+                    var keyCreationParameters = new CngKeyCreationParameters
+                    {
+                        Provider = keyStorageProvider
+                    };
+                    CngKey.Create(new CngAlgorithm("AES"), cryptoKeyName, keyCreationParameters);
+                }
+
+                using Aes aes = new AesCng(cryptoKeyName, keyStorageProvider);
                 aes.GenerateIV();
                 ivBytes = aes.IV;
 
@@ -34,7 +43,6 @@ namespace Banking_Application
             }
             finally
             {
-                ClearBytes(keyBytes);
                 ClearBytes(ivBytes);
             }
         }
@@ -44,7 +52,6 @@ namespace Banking_Application
             if (string.IsNullOrWhiteSpace(encryptedText) || encryptedText.Length < 24)
                 return encryptedText; // Probably not encrypted
 
-            byte[] keyBytes = Encoding.UTF8.GetBytes(encryptionKey);
             byte[] ivBytes = new byte[16];
 
             try
@@ -55,8 +62,17 @@ namespace Banking_Application
 
                 Array.Copy(fullCipher, 0, ivBytes, 0, ivBytes.Length);
 
-                using Aes aes = Aes.Create();
-                aes.Key = keyBytes;
+                // Ensure key exists in storage
+                if (!CngKey.Exists(cryptoKeyName, keyStorageProvider))
+                {
+                    var keyCreationParameters = new CngKeyCreationParameters
+                    {
+                        Provider = keyStorageProvider
+                    };
+                    CngKey.Create(new CngAlgorithm("AES"), cryptoKeyName, keyCreationParameters);
+                }
+
+                using Aes aes = new AesCng(cryptoKeyName, keyStorageProvider);
                 aes.IV = ivBytes;
 
                 using MemoryStream ms = new(fullCipher, ivBytes.Length, fullCipher.Length - ivBytes.Length);
@@ -70,7 +86,6 @@ namespace Banking_Application
             }
             finally
             {
-                ClearBytes(keyBytes);
                 ClearBytes(ivBytes);
             }
         }
