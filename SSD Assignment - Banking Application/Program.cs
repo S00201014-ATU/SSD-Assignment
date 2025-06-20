@@ -364,11 +364,6 @@ namespace Banking_Application
                         break;
 
                     case "4": //Lodge
-                        if (!HasSufficientDiskSpace())
-                        {
-                            Console.WriteLine("There isn't enough space on the computer to lodge money into an account.");
-                            break;
-                        }
 
                         Console.WriteLine("Enter Account Number: ");
                         String lodgeAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -464,11 +459,6 @@ namespace Banking_Application
                         break;
 
                     case "5": //Withdraw
-                        if (!HasSufficientDiskSpace())
-                        {
-                            Console.WriteLine("There isn't enough space on the computer to withdraw money from an account.");
-                            break;
-                        }
 
                         Console.WriteLine("Enter Account Number: ");
                         String withdrawAccNo = InputValidator.SanitizeString(Console.ReadLine());
