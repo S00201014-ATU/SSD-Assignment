@@ -339,11 +339,7 @@ namespace Banking_Application
                                 ba.name
                             );
                             // Clear sensitive decrypted data from memory
-                            ba.name = null;
-                            ba.address_line_1 = null;
-                            ba.address_line_2 = null;
-                            ba.address_line_3 = null;
-                            ba.town = null;
+                            ba = null;
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
                         }
@@ -438,7 +434,7 @@ namespace Banking_Application
                             Console.WriteLine($"Successfully lodged €{amountToLodge:F2}");
                             // Memory hygiene
                             ba = null;
-                            tellerName = null;
+                            tellerName = null; 
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
                         }
@@ -534,7 +530,7 @@ namespace Banking_Application
                                 );
 
                                 // Clear decrypted and sensitive data from memory
-                                ba.name = null;
+                                ba = null;
                                 reason = null;
                                 GC.Collect();
                                 GC.WaitForPendingFinalizers();
