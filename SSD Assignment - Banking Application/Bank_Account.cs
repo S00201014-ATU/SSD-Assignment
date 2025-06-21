@@ -54,15 +54,42 @@ namespace Banking_Application
         public abstract bool withdraw(double amountToWithdraw);
         public abstract double getAvailableFunds();
 
+        // NEW decrypted getters
+        public string getDecryptedName()
+        {
+            return CryptoHelper.Decrypt(name);
+        }
+
+        public string getDecryptedAddressLine1()
+        {
+            return CryptoHelper.Decrypt(address_line_1);
+        }
+
+        public string getDecryptedAddressLine2()
+        {
+            return CryptoHelper.Decrypt(address_line_2);
+        }
+
+        public string getDecryptedAddressLine3()
+        {
+            return CryptoHelper.Decrypt(address_line_3);
+        }
+
+        public string getDecryptedTown()
+        {
+            return CryptoHelper.Decrypt(town);
+        }
+
         public override string ToString()
         {
             return "\nAccount No: " + accountNo + "\n" +
-                   "Name: " + name + "\n" +
-                   "Address Line 1: " + address_line_1 + "\n" +
-                   "Address Line 2: " + address_line_2 + "\n" +
-                   "Address Line 3: " + address_line_3 + "\n" +
-                   "Town: " + town + "\n" +
+                   "Name: " + getDecryptedName() + "\n" +
+                   "Address Line 1: " + getDecryptedAddressLine1() + "\n" +
+                   "Address Line 2: " + getDecryptedAddressLine2() + "\n" +
+                   "Address Line 3: " + getDecryptedAddressLine3() + "\n" +
+                   "Town: " + getDecryptedTown() + "\n" +
                    "Balance: €" + balance.ToString("F2") + "\n";
         }
+
     }
 }

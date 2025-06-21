@@ -57,7 +57,7 @@ namespace Banking_Application
                             loopCount++;
                         } while (!(accountType.Equals("1") || accountType.Equals("2")));
 
-                        String name = "";
+                        string rawName = "";
                         loopCount = 0;
 
                         do
@@ -66,17 +66,13 @@ namespace Banking_Application
                                 Console.WriteLine("INVALID NAME ENTERED - PLEASE TRY AGAIN (Letters, spaces, apostrophes and hyphens only)");
 
                             Console.WriteLine("Enter Name: ");
-                            string rawName = InputValidator.SanitizeString(Console.ReadLine());
-                            name = rawName;
+                            rawName = InputValidator.SanitizeString(Console.ReadLine());
 
                             loopCount++;
-                        } while (!InputValidator.IsValidName(name));
+                        } while (!InputValidator.IsValidName(rawName));
 
-                        name = CryptoHelper.Encrypt(name);
-
-                        String addressLine1 = "";
-                        loopCount = 0;
                         string rawAddress1 = "";
+                        loopCount = 0;
 
                         do
                         {
@@ -85,44 +81,18 @@ namespace Banking_Application
 
                             Console.WriteLine("Enter Address Line 1: ");
                             rawAddress1 = InputValidator.SanitizeString(Console.ReadLine());
-                            addressLine1 = rawAddress1;
 
                             loopCount++;
-                        } while (!InputValidator.IsValidAddress(addressLine1, true));
+                        } while (!InputValidator.IsValidAddress(rawAddress1, true));
 
-                        addressLine1 = CryptoHelper.Encrypt(addressLine1);
-
-                        string addressLine2 = "";
                         Console.WriteLine("Enter Address Line 2: ");
                         string rawAddress2 = InputValidator.SanitizeString(Console.ReadLine());
 
-                        if (!InputValidator.IsValidAddress(rawAddress2, false))
-                        {
-                            Console.WriteLine("Invalid characters in Address Line 2 - clearing field");
-                            addressLine2 = "";
-                        }
-                        else
-                        {
-                            addressLine2 = CryptoHelper.Encrypt(rawAddress2);
-                        }
-
-                        String addressLine3 = "";
                         Console.WriteLine("Enter Address Line 3: ");
                         string rawAddress3 = InputValidator.SanitizeString(Console.ReadLine());
 
-                        if (!InputValidator.IsValidAddress(rawAddress3, false))
-                        {
-                            Console.WriteLine("Invalid characters in Address Line 3 - clearing field");
-                            addressLine3 = "";
-                        }
-                        else
-                        {
-                            addressLine3 = CryptoHelper.Encrypt(rawAddress3);
-                        }
-
-                        String town = "";
-                        loopCount = 0;
                         string rawTown = "";
+                        loopCount = 0;
 
                         do
                         {
@@ -131,12 +101,9 @@ namespace Banking_Application
 
                             Console.WriteLine("Enter Town: ");
                             rawTown = InputValidator.SanitizeString(Console.ReadLine());
-                            town = rawTown;
 
                             loopCount++;
-                        } while (!InputValidator.IsValidTown(town));
-
-                        town = CryptoHelper.Encrypt(town);
+                        } while (!InputValidator.IsValidTown(rawTown));
 
                         double balance = -1;
                         loopCount = 0;
@@ -147,7 +114,7 @@ namespace Banking_Application
                                 Console.WriteLine("INVALID OPENING BALANCE ENTERED - PLEASE TRY AGAIN (Must be 0 or greater)");
 
                             Console.WriteLine("Enter Opening Balance: ");
-                            String balanceString = Console.ReadLine();
+                            string balanceString = Console.ReadLine();
 
                             try
                             {
@@ -179,7 +146,7 @@ namespace Banking_Application
                                     Console.WriteLine("INVALID OVERDRAFT AMOUNT ENTERED - PLEASE TRY AGAIN (Must be 0 or greater)");
 
                                 Console.WriteLine("Enter Overdraft Amount: ");
-                                String overdraftAmountString = Console.ReadLine();
+                                string overdraftAmountString = Console.ReadLine();
 
                                 try
                                 {
@@ -197,7 +164,7 @@ namespace Banking_Application
                                 }
                             } while (overdraftAmount < 0);
 
-                            ba = new Current_Account(name, addressLine1, addressLine2, addressLine3, town, balance, overdraftAmount);
+                            ba = new Current_Account(rawName, rawAddress1, rawAddress2, rawAddress3, rawTown, balance, overdraftAmount);
                         }
                         else
                         {
@@ -210,7 +177,7 @@ namespace Banking_Application
                                     Console.WriteLine("INVALID INTEREST RATE ENTERED - PLEASE TRY AGAIN (Must be between 0 and 100)");
 
                                 Console.WriteLine("Enter Interest Rate (%): ");
-                                String interestRateString = Console.ReadLine();
+                                string interestRateString = Console.ReadLine();
 
                                 try
                                 {
@@ -228,23 +195,22 @@ namespace Banking_Application
                                 }
                             } while (interestRate < 0);
 
-                            ba = new Savings_Account(name, addressLine1, addressLine2, addressLine3, town, balance, interestRate);
+                            ba = new Savings_Account(rawName, rawAddress1, rawAddress2, rawAddress3, rawTown, balance, interestRate);
                         }
 
-                        String accNo = dal.addBankAccount(ba);
+                        string accNo = dal.addBankAccount(ba);
 
                         Console.WriteLine("New Account Number Is: " + accNo);
 
                         string tellerName = Environment.UserName;
 
-                        string decryptedName = CryptoHelper.Decrypt(ba.Name);
-
                         EventLogger.LogTransaction(
                             TransactionType.AccountCreation,
                             tellerName,
                             accNo,
-                            decryptedName
+                            rawName  //  use original user input — no need to decrypt after
                         );
+
                         ba = null;
                         tellerName = null;
                         GC.Collect();
@@ -332,21 +298,14 @@ namespace Banking_Application
                         }
                         else
                         {
-                            // Decrypt all PII fields before display
-                            string decryptedName_View = CryptoHelper.Decrypt(ba.Name);
-                            string decryptedAddress1 = CryptoHelper.Decrypt(ba.AddressLine1);
-                            string decryptedAddress2 = string.IsNullOrEmpty(ba.AddressLine2) ? "" : CryptoHelper.Decrypt(ba.AddressLine2);
-                            string decryptedAddress3 = string.IsNullOrEmpty(ba.AddressLine3) ? "" : CryptoHelper.Decrypt(ba.AddressLine3);
-                            string decryptedTown = CryptoHelper.Decrypt(ba.Town);
-
-                            Console.WriteLine($"\nAccount No: {ba.AccountNo}");
-                            Console.WriteLine($"Name: {decryptedName_View}");
-                            Console.WriteLine($"Address Line 1: {decryptedAddress1}");
-                            Console.WriteLine($"Address Line 2: {decryptedAddress2}");
-                            Console.WriteLine($"Address Line 3: {decryptedAddress3}");
-                            Console.WriteLine($"Town: {decryptedTown}");
-                            Console.WriteLine($"Balance: €{ba.Balance:F2}");
-                            Console.WriteLine($"Available Funds: €{ba.getAvailableFunds():F2}");
+                            Console.WriteLine("Account No: " + ba.AccountNo);
+                            Console.WriteLine("Name: " + ba.getDecryptedName());
+                            Console.WriteLine("Address Line 1: " + ba.getDecryptedAddressLine1());
+                            Console.WriteLine("Address Line 2: " + ba.getDecryptedAddressLine2());
+                            Console.WriteLine("Address Line 3: " + ba.getDecryptedAddressLine3());
+                            Console.WriteLine("Town: " + ba.getDecryptedTown());
+                            Console.WriteLine("Balance: €" + ba.Balance.ToString("F2"));
+                            Console.WriteLine("Available Funds: €" + ba.getAvailableFunds().ToString("F2"));
 
                             string tellerName_View = Environment.UserName;
 
@@ -354,7 +313,7 @@ namespace Banking_Application
                                 TransactionType.BalanceQuery,
                                 tellerName_View,
                                 viewAccNo,
-                                decryptedName_View
+                                ba.getDecryptedName()
                             );
 
                             // Clear sensitive decrypted data from memory
@@ -436,7 +395,7 @@ namespace Banking_Application
 
                             dal.lodge(lodgeAccNo, amountToLodge);
 
-                            string decryptedName_Lodge = CryptoHelper.Decrypt(ba.Name);
+                            string decryptedName_Lodge = ba.getDecryptedName();
                             string tellerName_Lodge = Environment.UserName;
 
                             EventLogger.LogTransaction(
@@ -536,7 +495,7 @@ namespace Banking_Application
                             {
                                 Console.WriteLine($"Successfully withdrew €{amountToWithdraw:F2}");
 
-                                string decryptedName_Withdraw = CryptoHelper.Decrypt(ba.Name);
+                                string decryptedName_Withdraw = ba.getDecryptedName();
                                 string tellerName_Withdraw = Environment.UserName;
 
                                 EventLogger.LogTransaction(

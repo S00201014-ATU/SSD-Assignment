@@ -72,16 +72,16 @@ namespace Banking_Application
                 var command = connection.CreateCommand();
 
                 command.CommandText = @"
-            INSERT INTO Bank_Accounts 
-            (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
-            VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
+        INSERT INTO Bank_Accounts 
+        (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
+        VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
 
                 command.Parameters.AddWithValue("@accountNo", ba.AccountNo);
-                command.Parameters.AddWithValue("@name", ba.Name);
-                command.Parameters.AddWithValue("@address1", ba.AddressLine1);
-                command.Parameters.AddWithValue("@address2", ba.AddressLine2);
-                command.Parameters.AddWithValue("@address3", ba.AddressLine3);
-                command.Parameters.AddWithValue("@town", ba.Town);
+                command.Parameters.AddWithValue("@name", CryptoHelper.Encrypt(ba.Name));
+                command.Parameters.AddWithValue("@address1", CryptoHelper.Encrypt(ba.AddressLine1));
+                command.Parameters.AddWithValue("@address2", CryptoHelper.Encrypt(ba.AddressLine2));
+                command.Parameters.AddWithValue("@address3", CryptoHelper.Encrypt(ba.AddressLine3));
+                command.Parameters.AddWithValue("@town", CryptoHelper.Encrypt(ba.Town));
                 command.Parameters.AddWithValue("@balance", ba.Balance);
                 command.Parameters.AddWithValue("@accountType", ba is Current_Account ? 1 : 2);
 
