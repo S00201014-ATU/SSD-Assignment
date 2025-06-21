@@ -16,9 +16,16 @@ namespace Banking_Application
             this.interestRate = interestRate;
         }
 
+        // Constructor for loading from database
+        public Savings_Account(string accountNo, string name, string address_line_1, string address_line_2, string address_line_3, string town, double balance, double interestRate)
+            : base(accountNo, name, address_line_1, address_line_2, address_line_3, town, balance)
+        {
+            this.interestRate = interestRate;
+        }
+
         public override double getAvailableFunds()
         {
-            return balance;
+            return Balance;
         }
 
         public override bool withdraw(double amountToWithdraw)
@@ -27,7 +34,7 @@ namespace Banking_Application
 
             if (avFunds >= amountToWithdraw)
             {
-                balance -= amountToWithdraw;
+                lodge(-amountToWithdraw);  // Decrease balance by using lodge(-X)
                 return true;
             }
             else

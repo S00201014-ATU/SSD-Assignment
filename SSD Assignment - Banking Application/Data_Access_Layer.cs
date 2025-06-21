@@ -76,13 +76,13 @@ namespace Banking_Application
             (accountNo, name, address_line_1, address_line_2, address_line_3, town, balance, accountType, overdraftAmount, interestRate) 
             VALUES (@accountNo, @name, @address1, @address2, @address3, @town, @balance, @accountType, @overdraft, @interest)";
 
-                command.Parameters.AddWithValue("@accountNo", ba.accountNo);
-                command.Parameters.AddWithValue("@name", ba.name);
-                command.Parameters.AddWithValue("@address1", ba.address_line_1);
-                command.Parameters.AddWithValue("@address2", ba.address_line_2);
-                command.Parameters.AddWithValue("@address3", ba.address_line_3);
-                command.Parameters.AddWithValue("@town", ba.town);
-                command.Parameters.AddWithValue("@balance", ba.balance);
+                command.Parameters.AddWithValue("@accountNo", ba.AccountNo);
+                command.Parameters.AddWithValue("@name", ba.Name);
+                command.Parameters.AddWithValue("@address1", ba.AddressLine1);
+                command.Parameters.AddWithValue("@address2", ba.AddressLine2);
+                command.Parameters.AddWithValue("@address3", ba.AddressLine3);
+                command.Parameters.AddWithValue("@town", ba.Town);
+                command.Parameters.AddWithValue("@balance", ba.Balance);
                 command.Parameters.AddWithValue("@accountType", ba is Current_Account ? 1 : 2);
 
                 if (ba is Current_Account ca)
@@ -99,7 +99,7 @@ namespace Banking_Application
                 command.ExecuteNonQuery();
             }
 
-            return ba.accountNo;
+            return ba.AccountNo;
         }
 
         public Bank_Account findBankAccountByAccNo(string accNo)
@@ -119,31 +119,29 @@ namespace Banking_Application
 
                         if (accountType == Account_Type.Current_Account)
                         {
-                            return new Current_Account
-                            {
-                                accountNo = reader.GetString(0),
-                                name = reader.GetString(1),
-                                address_line_1 = reader.GetString(2),
-                                address_line_2 = reader.GetString(3),
-                                address_line_3 = reader.GetString(4),
-                                town = reader.GetString(5),
-                                balance = reader.GetDouble(6),
-                                overdraftAmount = reader.GetDouble(8)
-                            };
+                            return new Current_Account(
+                                reader.GetString(0),  // accountNo
+                                reader.GetString(1),  // name
+                                reader.GetString(2),  // address_line_1
+                                reader.GetString(3),  // address_line_2
+                                reader.GetString(4),  // address_line_3
+                                reader.GetString(5),  // town
+                                reader.GetDouble(6),  // balance
+                                reader.GetDouble(8)   // overdraftAmount
+                            );
                         }
                         else
                         {
-                            return new Savings_Account
-                            {
-                                accountNo = reader.GetString(0),
-                                name = reader.GetString(1),
-                                address_line_1 = reader.GetString(2),
-                                address_line_2 = reader.GetString(3),
-                                address_line_3 = reader.GetString(4),
-                                town = reader.GetString(5),
-                                balance = reader.GetDouble(6),
-                                interestRate = reader.GetDouble(9)
-                            };
+                            return new Savings_Account(
+                                reader.GetString(0),  // accountNo
+                                reader.GetString(1),  // name
+                                reader.GetString(2),  // address_line_1
+                                reader.GetString(3),  // address_line_2
+                                reader.GetString(4),  // address_line_3
+                                reader.GetString(5),  // town
+                                reader.GetDouble(6),  // balance
+                                reader.GetDouble(9)   // interestRate
+                            );
                         }
                     }
                 }

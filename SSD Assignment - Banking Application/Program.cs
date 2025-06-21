@@ -237,11 +237,13 @@ namespace Banking_Application
 
                         string tellerName = Environment.UserName;
 
+                        string decryptedName = CryptoHelper.Decrypt(ba.Name);
+
                         EventLogger.LogTransaction(
                             TransactionType.AccountCreation,
                             tellerName,
                             accNo,
-                            ba.name
+                            decryptedName
                         );
                         ba = null;
                         tellerName = null;
@@ -274,7 +276,6 @@ namespace Banking_Application
 
                             do
                             {
-
                                 Console.WriteLine("Proceed With Deletion (Y/N)?");
                                 ans = Console.ReadLine();
 
@@ -284,21 +285,21 @@ namespace Banking_Application
                                     case "y":
                                         dal.closeBankAccount(closeAccNo);
                                         Console.WriteLine("Account Closed Successfully");
-                                        tellerName = Environment.UserName; // Placeholder
-                                        ba.name = CryptoHelper.Decrypt(ba.name);
+
+                                        string decryptedName_Close = CryptoHelper.Decrypt(ba.Name);
+                                        string tellerName_Close = Environment.UserName;
 
                                         EventLogger.LogTransaction(
                                             TransactionType.AccountClosure,
-                                            tellerName,
+                                            tellerName_Close,
                                             closeAccNo,
-                                            ba.name
+                                            decryptedName_Close
                                         );
 
                                         ba = null;
-                                        tellerName = null;
                                         GC.Collect();
                                         GC.WaitForPendingFinalizers();
-                                        
+
                                         break;
                                     case "N":
                                     case "n":
@@ -312,6 +313,7 @@ namespace Banking_Application
                         }
 
                         break;
+
                     case "3":
                         Console.WriteLine("Enter Account Number: ");
                         String viewAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -331,22 +333,30 @@ namespace Banking_Application
                         else
                         {
                             // Decrypt all PII fields before display
-                            ba.name = CryptoHelper.Decrypt(ba.name);
-                            ba.address_line_1 = CryptoHelper.Decrypt(ba.address_line_1);
-                            ba.address_line_2 = string.IsNullOrEmpty(ba.address_line_2) ? "" : CryptoHelper.Decrypt(ba.address_line_2);
-                            ba.address_line_3 = string.IsNullOrEmpty(ba.address_line_3) ? "" : CryptoHelper.Decrypt(ba.address_line_3);
-                            ba.town = CryptoHelper.Decrypt(ba.town);
+                            string decryptedName_View = CryptoHelper.Decrypt(ba.Name);
+                            string decryptedAddress1 = CryptoHelper.Decrypt(ba.AddressLine1);
+                            string decryptedAddress2 = string.IsNullOrEmpty(ba.AddressLine2) ? "" : CryptoHelper.Decrypt(ba.AddressLine2);
+                            string decryptedAddress3 = string.IsNullOrEmpty(ba.AddressLine3) ? "" : CryptoHelper.Decrypt(ba.AddressLine3);
+                            string decryptedTown = CryptoHelper.Decrypt(ba.Town);
 
-                            Console.WriteLine(ba.ToString());
+                            Console.WriteLine($"\nAccount No: {ba.AccountNo}");
+                            Console.WriteLine($"Name: {decryptedName_View}");
+                            Console.WriteLine($"Address Line 1: {decryptedAddress1}");
+                            Console.WriteLine($"Address Line 2: {decryptedAddress2}");
+                            Console.WriteLine($"Address Line 3: {decryptedAddress3}");
+                            Console.WriteLine($"Town: {decryptedTown}");
+                            Console.WriteLine($"Balance: €{ba.Balance:F2}");
+                            Console.WriteLine($"Available Funds: €{ba.getAvailableFunds():F2}");
 
-                            tellerName = Environment.UserName; // Placeholder
+                            string tellerName_View = Environment.UserName;
 
                             EventLogger.LogTransaction(
                                 TransactionType.BalanceQuery,
-                                tellerName,
+                                tellerName_View,
                                 viewAccNo,
-                                ba.name
+                                decryptedName_View
                             );
+
                             // Clear sensitive decrypted data from memory
                             ba = null;
                             GC.Collect();
@@ -354,7 +364,7 @@ namespace Banking_Application
                         }
                         break;
 
-                    case "4": //Lodge
+                    case "4": // Lodge
 
                         Console.WriteLine("Enter Account Number: ");
                         String lodgeAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -424,32 +434,30 @@ namespace Banking_Application
                                 } while (reason == null);
                             }
 
-
-
                             dal.lodge(lodgeAccNo, amountToLodge);
 
-                            tellerName = Environment.UserName;
-                            ba.name = CryptoHelper.Decrypt(ba.name);
+                            string decryptedName_Lodge = CryptoHelper.Decrypt(ba.Name);
+                            string tellerName_Lodge = Environment.UserName;
 
                             EventLogger.LogTransaction(
                                 TransactionType.Lodgement,
-                                tellerName,
+                                tellerName_Lodge,
                                 lodgeAccNo,
-                                ba.name,
+                                decryptedName_Lodge,
                                 amountToLodge,
                                 reason
                             );
 
                             Console.WriteLine($"Successfully lodged €{amountToLodge:F2}");
+
                             // Memory hygiene
                             ba = null;
-                            tellerName = null; 
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
                         }
                         break;
 
-                    case "5": //Withdraw
+                    case "5": // Withdraw
 
                         Console.WriteLine("Enter Account Number: ");
                         String withdrawAccNo = InputValidator.SanitizeString(Console.ReadLine());
@@ -527,13 +535,15 @@ namespace Banking_Application
                             else
                             {
                                 Console.WriteLine($"Successfully withdrew €{amountToWithdraw:F2}");
-                                tellerName = Environment.UserName; // Placeholder
-                                ba.name = CryptoHelper.Decrypt(ba.name);
+
+                                string decryptedName_Withdraw = CryptoHelper.Decrypt(ba.Name);
+                                string tellerName_Withdraw = Environment.UserName;
+
                                 EventLogger.LogTransaction(
                                     TransactionType.Withdrawal,
-                                    tellerName,
+                                    tellerName_Withdraw,
                                     withdrawAccNo,
-                                    ba.name,
+                                    decryptedName_Withdraw,
                                     amountToWithdraw,
                                     reason
                                 );
