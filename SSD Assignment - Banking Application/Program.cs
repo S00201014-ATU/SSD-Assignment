@@ -13,6 +13,7 @@ namespace Banking_Application
         {
 
             Data_Access_Layer dal = Data_Access_Layer.getInstance();
+            dal.GetType().GetMethod("initialiseDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(dal, null);
             bool running = true;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -200,7 +201,8 @@ namespace Banking_Application
 
                         string accNo = dal.addBankAccount(ba);
 
-                        Console.WriteLine("New Account Number Is: " + accNo);
+                        Console.WriteLine("New Account Number Is: " + ba.getDecryptedAccountNo());
+;
 
                         string tellerName = Environment.UserName;
 

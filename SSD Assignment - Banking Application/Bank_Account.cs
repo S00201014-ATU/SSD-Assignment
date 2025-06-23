@@ -55,6 +55,12 @@ namespace Banking_Application
         public abstract double getAvailableFunds();
 
         // NEW decrypted getters
+
+        public string getDecryptedAccountNo()
+        {
+            return accountNo;
+        }
+
         public string getDecryptedName()
         {
             return CryptoHelper.Decrypt(name);
@@ -82,7 +88,7 @@ namespace Banking_Application
 
         public override string ToString()
         {
-            return "\nAccount No: " + accountNo + "\n" +
+            return "\nAccount No: " + getDecryptedAccountNo() + "\n" +
                    "Name: " + getDecryptedName() + "\n" +
                    "Address Line 1: " + getDecryptedAddressLine1() + "\n" +
                    "Address Line 2: " + getDecryptedAddressLine2() + "\n" +

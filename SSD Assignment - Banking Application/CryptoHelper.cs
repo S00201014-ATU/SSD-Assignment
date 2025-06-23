@@ -95,5 +95,15 @@ namespace Banking_Application
             if (data == null) return;
             for (int i = 0; i < data.Length; i++) data[i] = 0;
         }
+
+        public static string CalculateHMAC(string input)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes("YourSuperSecretKey123!")))
+            {
+                byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(input));
+                return Convert.ToBase64String(hash);
+            }
+        }
+
     }
 }
