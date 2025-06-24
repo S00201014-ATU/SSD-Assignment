@@ -216,6 +216,8 @@ namespace Banking_Application
         AccountClosure,
         BalanceQuery,
         Lodgement,
-        Withdrawal
+        Withdrawal,
+        LoginSuccess,
+        LoginFailure,
     }
 }

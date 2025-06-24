@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Text;
 
 namespace Banking_Application
 {
@@ -16,6 +17,74 @@ namespace Banking_Application
             dal.GetType().GetMethod("initialiseDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(dal, null);
             bool running = true;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            bool loggedIn = false;
+            int attempts = 0;
+            const int maxAttempts = 3;
+
+            do
+            {
+                Console.WriteLine("Active Directory Login Required...");
+
+                Console.Write("Enter Username: ");
+                string username = Console.ReadLine();
+
+                Console.Write("Enter Password: ");
+                string password = ReadPassword();
+
+                ActiveDirectoryAuthenticator auth = new ActiveDirectoryAuthenticator();
+
+                if (auth.Login(username, password))
+                {
+                    if (!auth.IsUserInGroup(username, "Bank Teller"))
+                    {
+                        Console.WriteLine("Login failed — user is not a member of Bank Teller group.");
+                        EventLogger.LogTransaction(
+                            TransactionType.LoginFailure,
+                            username,
+                            "-", "-", null, "-"
+                        );
+
+                        attempts++;
+
+                        if (attempts >= maxAttempts)
+                        {
+                            Console.WriteLine("Too many failed attempts. Exiting...");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Login successful!");
+                        EventLogger.LogTransaction(
+                            TransactionType.LoginSuccess,
+                            username,
+                            "-", "-", null, "-"
+                        );
+
+                        loggedIn = true;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Login failed!");
+                    EventLogger.LogTransaction(
+                        TransactionType.LoginFailure,
+                        username,
+                        "-", "-", null, "-"
+                    );
+
+                    attempts++;
+
+                    if (attempts >= maxAttempts)
+                    {
+                        Console.WriteLine("Too many failed attempts. Exiting...");
+                        return;
+                    }
+                }
+
+
+            } while (!loggedIn);
 
             do
             {
@@ -251,6 +320,30 @@ namespace Banking_Application
                                 {
                                     case "Y":
                                     case "y":
+                                        // Administrator Approval
+                                        Console.WriteLine("Administrator approval required to delete this account.");
+                                        Console.Write("Enter Administrator Username: ");
+                                        string adminUsername = Console.ReadLine();
+
+                                        Console.Write("Enter Administrator Password: ");
+                                        string adminPassword = ReadPassword();
+
+                                        ActiveDirectoryAuthenticator auth = new ActiveDirectoryAuthenticator();
+
+                                        if (!auth.Login(adminUsername, adminPassword))
+                                        {
+                                            Console.WriteLine("Administrator login failed — cannot delete account.");
+                                            break;
+                                        }
+
+                                        if (!auth.IsUserInGroup(adminUsername, "Bank Teller Administrator"))
+                                        {
+                                            Console.WriteLine("Administrator approval failed — user is not in Bank Teller Administrator group.");
+                                            break;
+                                        }
+
+                                        // If passed continue to delete
+
                                         dal.closeBankAccount(closeAccNo);
                                         Console.WriteLine("Account Closed Successfully");
 
@@ -531,5 +624,30 @@ namespace Banking_Application
 
         }
 
+        static string ReadPassword()
+        {
+            StringBuilder password = new StringBuilder();
+            ConsoleKeyInfo key;
+
+            do
+            {
+                key = Console.ReadKey(true);
+
+                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
+                {
+                    password.Append(key.KeyChar);
+                    Console.Write("*");
+                }
+                else if (key.Key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password.Remove(password.Length - 1, 1);
+                    Console.Write("\b \b");
+                }
+            }
+            while (key.Key != ConsoleKey.Enter);
+
+            Console.WriteLine();
+            return password.ToString();
+        }
     }
 }
