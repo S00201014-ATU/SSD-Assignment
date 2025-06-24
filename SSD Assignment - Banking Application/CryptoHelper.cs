@@ -27,6 +27,7 @@ namespace Banking_Application
                 }
 
                 using Aes aes = new AesCng(cryptoKeyName, keyStorageProvider);
+                aes.Padding = PaddingMode.PKCS7;
                 aes.GenerateIV();
                 ivBytes = aes.IV;
 
